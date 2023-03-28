@@ -44,6 +44,17 @@ onprem2_gw_vti1=10.1.0.251
 onprem2_vm_subnet_name=vm
 onprem2_vm_subnet_address=10.1.1.0/24
 
+onprem3_vnet_name=onprem3
+onprem3_vnet_address=10.3.0.0/16
+onprem3_gw_subnet_name=gw
+onprem3_gw_subnet_address=10.3.0.0/24
+onprem3_gw_asn=65523
+onprem3_gw_private_ip=10.3.0.23
+onprem3_gw_vti0=10.3.0.250
+onprem3_gw_vti1=10.3.0.251
+onprem3_vm_subnet_name=vm
+onprem3_vm_subnet_address=10.3.1.0/24
+
 admin_username=$(whoami)
 psk=secret12345
 vm_size=Standard_b1s
@@ -157,6 +168,11 @@ az network vnet subnet create -g $rg -n $onprem1_gw_subnet_name --address-prefix
 echo -e "\e[1;36mCreating $onprem2_vnet_name VNet...\e[0m"
 az network vnet create -g $rg -n $onprem2_vnet_name -l $location2 --address-prefixes $onprem2_vnet_address --subnet-name $onprem2_vm_subnet_name --subnet-prefixes $onprem2_vm_subnet_address -o none
 az network vnet subnet create -g $rg -n $onprem2_gw_subnet_name --address-prefixes $onprem2_gw_subnet_address --vnet-name $onprem2_vnet_name -o none
+
+# onprem3 vnet
+echo -e "\e[1;36mCreating $onprem3_vnet_name VNet...\e[0m"
+az network vnet create -g $rg -n $onprem3_vnet_name -l $location2 --address-prefixes $onprem3_vnet_address --subnet-name $onprem3_vm_subnet_name --subnet-prefixes $onprem3_vm_subnet_address -o none
+az network vnet subnet create -g $rg -n $onprem3_gw_subnet_name --address-prefixes $onprem3_gw_subnet_address --vnet-name $onprem3_vnet_name -o none
 
 # onprem1 gw
 echo -e "\e[1;36mDeploying $onprem1_vnet_name-gw VM...\e[0m"
