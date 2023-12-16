@@ -33,14 +33,14 @@ onprem2_vm_subnet_address=10.1.1.0/24
 
 admin_username=$(whoami)
 psk=secret12345
-vm_size=Standard_b1s
+vm_size=Standard_B1s
 
 cloudinit_file=~/cloudinit.txt
 cat <<EOF > $cloudinit_file
 #cloud-config
 runcmd:
   - curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -
-  - echo deb https://deb.frrouting.org/frr bionic frr-stable | sudo tee -a /etc/apt/sources.list.d/frr.list
+  - echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) frr-stable | sudo tee -a /etc/apt/sources.list.d/frr.list
   - sudo apt update && sudo apt install -y frr frr-pythontools strongswan tcptraceroute
   - sudo sed -i "/bgpd=no/ s//bgpd=yes/" /etc/frr/daemons
   - sudo service frr restart
@@ -104,7 +104,7 @@ az network vnet subnet update -g $rg -n $hub1_vm_subnet_name --vnet-name $hub1_v
 
 # hub1 VPN GW
 echo -e "\e[1;36mDeploying $hub1_vnet_name-gw VPN Gateway...\e[0m"
-az network public-ip create -g $rg -n $hub1_vnet_name-gw-pubip -l $location1 --allocation-method Dynamic -o none
+az network public-ip create -g $rg -n $hub1_vnet_name-gw-pubip -l $location1 --allocation-method Static -o none
 az network vnet-gateway create -g $rg -n $hub1_vnet_name-gw --public-ip-addresses $hub1_vnet_name-gw-pubip --vnet $hub1_vnet_name --sku VpnGw2 --gateway-type Vpn --vpn-type RouteBased --no-wait
 
 # onprem1 vnet
@@ -119,9 +119,9 @@ az network vnet subnet create -g $rg -n $onprem2_gw_subnet_name --address-prefix
 
 # onprem1 gw
 echo -e "\e[1;36mDeploying $onprem1_vnet_name-gw VM...\e[0m"
-az network public-ip create -g $rg -n $onprem1_vnet_name-gw -l $location1 --allocation-method Static --sku Basic -o none
+az network public-ip create -g $rg -n $onprem1_vnet_name-gw -l $location1 --allocation-method Static --sku Standard -o none
 az network nic create -g $rg  -n $onprem1_vnet_name-gw -l $location1 --vnet-name $onprem1_vnet_name --subnet $onprem1_gw_subnet_name --ip-forwarding true --public-ip-address $onprem1_vnet_name-gw -o none
-az vm create -g $rg -n $onprem1_vnet_name-gw -l $location1 --image UbuntuLTS --nics $onprem1_vnet_name-gw --os-disk-name $onprem1_vnet_name-gw --size $vm_size --admin-username $admin_username --generate-ssh-keys --custom-data $cloudinit_file --no-wait
+az vm create -g $rg -n $onprem1_vnet_name-gw -l $location1 --image Ubuntu2204 --nics $onprem1_vnet_name-gw --os-disk-name $onprem1_vnet_name-gw --size $vm_size --admin-username $admin_username --generate-ssh-keys --custom-data $cloudinit_file --no-wait
 # onprem1 gw details
 onprem1_gw_pubip=$(az network public-ip show -g $rg -n $onprem1_vnet_name-gw --query ipAddress -o tsv) && echo $onprem1_vnet_name-gw public ip: $onprem1_gw_pubip
 onprem1_gw_private_ip=$(az network nic show -g $rg -n $onprem1_vnet_name-gw --query ipConfigurations[0].privateIPAddress -o tsv)  && echo $onprem1_vnet_name-gw private ip: $onprem1_gw_private_ip
